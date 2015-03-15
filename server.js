@@ -122,6 +122,7 @@ var SampleApp = function() {
         //self.app = express.createServer();
         // var express = require("express");
         self.app = express();
+        self.app.use(express.static(__dirname + '/public'));
 
         //  Add handlers for the app (from the routes).
         for (var r in self.routes) {
@@ -141,8 +142,6 @@ var SampleApp = function() {
         // Create the express server and routes.
         self.initializeServer();
 
-        self.app.use('/bootstrap-material-design-master/dist/css', express.static(__dirname + '/public'));
-        self.app.use('/bootstrap-material-design-master/dist/js', express.static(__dirname + '/public'));
     };
 
 
