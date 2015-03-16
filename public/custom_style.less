@@ -1,0 +1,128 @@
+@text-color: #3F3E3D;
+@border-color: #D2D2D2;
+@content-width: 860px;
+@num-columns: 4;
+@column-width: 330px;
+
+.antialiased (@color) {
+	color: @color;
+	//text-shadow: @color 0 0 1px;
+}
+
+body{
+	margin: 0;
+  	overflow-y: hidden;
+  	overflow-x: scroll;
+
+  	height:100%;
+  	width:@num-columns*@column-width;
+}
+
+@tweetfeed-hpadding: 15px;
+.tweetfeed{
+	overflow-y: scroll;
+	overflow-x: hidden;
+	position: absolute;
+    top: 0px;
+    bottom: 0;
+    height:100%;
+    width: @column-width;
+    padding: 0 @tweetfeed-hpadding;
+}
+#tweetfeed1{
+    left: 0;
+}
+
+#tweetfeed2{
+    left: 1*@column-width;
+}
+
+#tweetfeed3{
+    left: 2*@column-width;
+}
+
+#tweetfeed4{
+    left: 3*@column-width;
+}
+
+#tweetfeed5{
+    left: 4*@column-width;
+}
+
+#tweetfeed6{
+    left: 5*@column-width;
+}
+div.ribbitWrapper {
+	padding: 10px 0;
+	border-bottom: 1px solid @border-color;
+	//display: block;
+	&:last-child {
+		border: none;
+	}
+	
+	img.avatar {
+		//margin: 0 19px 0 20px;
+		width: 48px;
+		height: 48px;
+		float: left;
+		border-radius: 3px;
+	}
+	div.tweet-content {
+		//width: @column-width - 2*@tweetfeed-hpadding;
+		padding-left: 58px;
+		header.tweet-header {
+			display: block;
+
+			div {
+				&.account-inline {
+					text-align: left;
+					white-space: nowrap;
+					overflow: hidden;
+					text-overflow: ellipsis;
+
+					span {
+						&.name {
+							font-size: 14px;
+							font-weight: bold;
+							color: #111;
+						}
+						&.screen-name{
+							font-size: 12px;
+							color: #888;
+							padding-left: 3px;
+						}
+					}
+				}
+
+				&.time {
+					font-size: 12px;
+					color: #888;
+					float: right;
+					padding-left: 5px;
+				}
+			}
+		}	
+		p {
+			padding: 0;
+			line-height: 1.2857;
+			font-size: 14px;
+			.antialiased(@text-color);
+			span.spacing {
+				padding-left: 9px;
+				margin-left: 9px;
+				height: 10px;
+				border-left: 1px solid @border-color;
+			}
+		}
+	}	
+}
+
+.txt-ellipsis {
+	max-width: 100%;
+	vertical-align: bottom;
+	overflow: hidden;
+	white-space: nowrap;
+	word-wrap: normal;
+	-ms-text-overflow: ellipsis;
+	text-overflow: ellipsis;
+}

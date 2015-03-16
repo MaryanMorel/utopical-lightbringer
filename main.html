@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>Utopical</title>
+
+
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Mobile support -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Twitter Bootstrap -->
+<!--     <link href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.2/css/bootstrap.min.css" rel="stylesheet">
+ -->
+    <!-- Material Design for Bootstrap -->
+    <link href="dist/css/roboto.min.css" rel="stylesheet">
+    <link href="dist/css/material-fullpalette.min.css" rel="stylesheet">
+    <link href="dist/css/ripples.min.css" rel="stylesheet">
+
+    <link rel="stylesheet/less" href="custom_style.less">
+    <script src="less.js"></script>
+
+    <!-- Dropdown.js -->
+    <!-- <link href="//cdn.rawgit.com/FezVrasta/dropdown.js/master/jquery.dropdown.css" rel="stylesheet"> -->
+
+ 
+
+
+    <!-- jQuery -->
+    <script src="//code.jquery.com/jquery-1.10.2.min.js"></script>
+  
+  </head>
+
+  <body>
+    
+<div class="container">
+        <div class="row">
+            <div class="tweetfeed" id="tweetfeed1"><p>Box 1</p></div>
+            <div class="tweetfeed" id="tweetfeed2"><p>Box 2</p></div>
+            <div class="tweetfeed" id="tweetfeed3"><p>Box 3</p></div>
+            <div class="tweetfeed" id="tweetfeed4"><p>Box 3</p></div>
+            <div class="tweetfeed" id="tweetfeed5"><p>Box 3</p></div>
+            <div class="tweetfeed" id="tweetfeed6"><p>Box 3</p></div>
+            </div>
+        </div>
+    </div>
+
+  <script>
+
+        function shuffleArray(array) {
+          for (var i = array.length - 1; i > 0; i--) {
+              var j = Math.floor(Math.random() * (i + 1));
+              var temp = array[i];
+              array[i] = array[j];
+              array[j] = temp;
+          }
+          return array;
+        }
+        $.getJSON( "data/api_response_head.json", function( data ) {
+          var items = [];
+          $.each( data, function( key, val ) {
+            var tweet = '<div class="ribbitWrapper">';
+            tweet += '<img class="avatar" src="' + val["user"]["profile_image_url"] + '">';
+            tweet += '<div class="tweet-content">';
+            tweet += '<header class="tweet-header">';
+            tweet += '<div class="time">15m</div>';
+            tweet += '<div class="account-inline">';
+            tweet += '<span class="name">' + val["user"]["name"] + '</span>';
+            tweet += '<span class="screen-name">@' + val["user"]["screen_name"] + '</span>';
+            tweet +=  '</div>';
+            tweet += '</header>';
+            tweet += '<p>' + val["text"] + '</p>';
+            tweet += '</div>';
+            tweet += '</div>';
+            items.push(tweet);
+          });
+
+          document.getElementById("tweetfeed1").innerHTML = items.join( "" );
+          items = shuffleArray(items);
+          document.getElementById("tweetfeed2").innerHTML = items.join( "" );
+          items = shuffleArray(items);
+          document.getElementById("tweetfeed3").innerHTML = items.join( "" );
+          items = shuffleArray(items);
+          document.getElementById("tweetfeed4").innerHTML = items.join( "" );
+          items = shuffleArray(items);
+          document.getElementById("tweetfeed5").innerHTML = items.join( "" );
+          items = shuffleArray(items);
+          document.getElementById("tweetfeed6").innerHTML = items.join( "" );
+      });
+      </script>
+
+
+
+
+
+        <!-- Open source code -->
+    <script>
+      window.page = window.location.hash || "#about";
+
+      $(document).ready(function() {
+        if (window.page != "#about") {
+          $(".menu").find("li[data-target=" + window.page + "]").trigger("click");
+        }
+      });
+
+      $(window).on("resize", function() {
+        $("html, body").height($(window).height());
+        $(".main, .menu").height($(window).height() - $(".header-panel").outerHeight());
+        $(".pages").height($(window).height());
+      }).trigger("resize");
+
+      $(".menu li").click(function() {
+        // Menu
+        if (!$(this).data("target")) return;
+        if ($(this).is(".active")) return;
+        $(".menu li").not($(this)).removeClass("active");
+        $(".page").not(page).removeClass("active").hide();
+        window.page = $(this).data("target");
+        var page = $(window.page);
+        window.location.hash = window.page;
+        $(this).addClass("active");
+
+
+        page.show();
+
+        var totop = setInterval(function() {
+          $(".pages").animate({scrollTop:0}, 0);
+        }, 1);
+
+        setTimeout(function() {
+          page.addClass("active");
+          setTimeout(function() {
+            clearInterval(totop);
+          }, 1000);
+        }, 100);
+      });
+
+      function cleanSource(html) {
+        var lines = html.split(/\n/);
+
+        lines.shift();
+        lines.splice(-1, 1);
+
+        var indentSize = lines[0].length - lines[0].trim().length,
+            re = new RegExp(" {" + indentSize + "}");
+
+        lines = lines.map(function(line){
+          if (line.match(re)) {
+            line = line.substring(indentSize);
+          }
+
+          return line;
+        });
+
+        lines = lines.join("\n");
+
+        return lines;
+      }
+
+      $("#opensource").click(function() {
+        $.get(window.location.href, function(data){
+          var html = $(data).find(window.page).html();
+          html = cleanSource(html);
+          $("#source-modal pre").text(html);
+          $("#source-modal").modal();
+        });
+      });
+    </script>
+
+    <!-- Twitter Bootstrap -->
+    <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.2/js/bootstrap.min.js"></script>
+
+    <!-- Material Design for Bootstrap -->
+    <script src="dist/js/material.min.js"></script>
+    <script src="dist/js/ripples.min.js"></script>
+    <script>
+      $.material.init();
+    </script>
+
+
+    <!-- Dropdown.js -->
+    <script src="https://cdn.rawgit.com/FezVrasta/dropdown.js/master/jquery.dropdown.js"></script>
+    <script>
+      $("#dropdown-menu select").dropdown();
+    </script>
+
+
+  </body>
+  
+</html>
