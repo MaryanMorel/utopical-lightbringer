@@ -71,6 +71,13 @@
             tweet +=  '</div>';
             tweet += '</header>';
             tweet += '<p>' + val["text"] + '</p>';
+
+            if (val["cards"]["photos"] && val["cards"]["photos"].length > 0){
+              tweet += '<a href="' + val["cards"]["photos"][0]["url"] +'">';
+              tweet += '<div class="cropped-img" ';
+              tweet += 'style="background-image: url(\'' + val["cards"]["photos"][0]["images"]["web"]["image_url"] + '\');">' + '</div></a>';
+            }
+
             tweet += '</div>';
             tweet += '</div>';
             items.push(tweet);
