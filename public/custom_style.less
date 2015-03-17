@@ -28,6 +28,11 @@ body{
     height:100%;
     width: @column-width;
     padding: 0 @tweetfeed-hpadding;
+	
+	border-right: 5px solid @border-color;
+    &:last-child {
+		border: none;
+	}
 }
 #tweetfeed1{
     left: 0;
@@ -61,14 +66,12 @@ div.ribbitWrapper {
 	}
 	
 	img.avatar {
-		//margin: 0 19px 0 20px;
 		width: 48px;
 		height: 48px;
 		float: left;
 		border-radius: 3px;
 	}
 	div.tweet-content {
-		//width: @column-width - 2*@tweetfeed-hpadding;
 		padding-left: 58px;
 		header.tweet-header {
 			display: block;
@@ -118,8 +121,9 @@ div.ribbitWrapper {
 		}
 		div.cropped-img {
 				width: 100%;
+				//height: 100%;
+				//height: auto;
 				height: 122px;
-				//max-height: 122px;
 				background-position: center center;
 				background-repeat: no-repeat;
 			}
