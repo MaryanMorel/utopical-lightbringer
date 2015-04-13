@@ -6,18 +6,18 @@ block content
 			each tweetfeed, i in tweetfeeds
 				div.tweetfeed(id=tweetfeed)
 					each tweet, i in tweets
-						div.ribbitWrapper
+						div.tweetWrapper
 							img.avatar(src=tweet.user.profile_image_url)
 							div.tweet-content
 								header.tweet-header
 									div.time 
-										span='' + moment.duration( new moment() - moment(tweet.created_at) ).humanize()
+										span='' + moment.duration( new moment() - moment(new Date(tweet.created_at)) ).humanize()
 									div.account-inline
 										span.name #{tweet.user.name}
-										span.screen-name #{tweet.user.screen_name}
+										span.screen-name @#{tweet.user.screen_name}
 								p #{tweet.text}
 								if tweet.entities && tweet.entities.media && tweet.entities.media.length > 0
 									each media in tweet.entities.media
 										if media.type == "photo"
-											a(href=tweet.entities.media[0].display_url)
+											a(href=tweet.entities.media[0].url)
 												div.cropped-img(style="background-image: url('#{tweet.entities.media[0].media_url}');")

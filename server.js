@@ -53,13 +53,14 @@ var SampleApp = function() {
      *  Populate the cache.
      */
     self.populateCache = function() {
-        if (typeof self.zcache === "undefined") {
-            self.zcache = { 'index.html': '' };
-        }
+        self.zcache = {};
+        // if (typeof self.zcache === "undefined") {
+        //     self.zcache = { 'index.html': '' };
+        // }
 
-        //  Local cache for static content.
-        self.zcache['index.html'] = fs.readFileSync('./index.html');
-        self.zcache['dev.html'] = fs.readFileSync('./dev.html');
+        // //  Local cache for static content.
+        // self.zcache['index.html'] = fs.readFileSync('./index.html');
+        // self.zcache['dev.html'] = fs.readFileSync('./dev.html');
     };
 
 
@@ -118,23 +119,10 @@ var SampleApp = function() {
             res.send("<html><body><img src='" + link + "'></body></html>");
         };
 
+
         self.routes['/'] = function(req, res) {
-            res.setHeader('Content-Type', 'text/html');
-            res.send(self.cache_get('index.html') );
-        };
-
-        self.routes['/dev.html'] = function(req, res) {
-            res.setHeader('Content-Type', 'text/html');
-            res.send(self.cache_get('dev.html') );
-        };
-
-        self.routes['/helloworld'] = function(req, res) {
-            res.render('helloworld', { title: 'Hello, World!' })
-        };
-
-        self.routes['/userlist'] = function(req, res) {
             db.tweets.find({}, { limit : 50 }, function(e, tweets){
-                res.render('userlist', {
+                res.render('main', {
                     "tweets" : tweets,
                     "tweetfeeds" : ["tweetfeed1", 
                     "tweetfeed2", "tweetfeed3", "tweetfeed4", 
@@ -142,7 +130,6 @@ var SampleApp = function() {
                 });
             });
         };
-
     };
 
 
@@ -187,7 +174,6 @@ var SampleApp = function() {
         });
 
         self.app.locals.moment = require('moment');
-        //self.app.use('/', routes);
 
 
     };
@@ -204,10 +190,6 @@ var SampleApp = function() {
         });
     };
 
-    // self.app.use(function(req,res,next){
-    //     req.db = db;
-    //     next();
-    // });
 
 self.handleErrors = function(){
 
