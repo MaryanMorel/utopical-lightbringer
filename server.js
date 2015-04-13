@@ -46,13 +46,16 @@ else {
       port     : '39871',
       user     : 'adminp2uV8Z4',
       password : '4YyWmAsb-DNS',
-      database : 'dev'
+      database : 'main'
     });
 
     connection.connect();
     connection.query('SELECT * from mongo_password WHERE id=1', function(err, rows, fields) {
       if (err) throw err;
       console.log('The solution is: ', rows[0]);
+      var password = rows[0]["pwd"];
+        var uri = "mongodb://nodejs:" + password + "@ds029807.mongolab.com:29807/utopical";
+        db = mongojs.connect(uri, ["tweets", "users"]);
     });
     connection.end();
 }
