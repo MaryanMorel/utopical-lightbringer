@@ -2,6 +2,8 @@
 logs
 *.log
 
+password.txt
+
 # Runtime data
 pids
 *.pid

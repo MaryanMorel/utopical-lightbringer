@@ -2,6 +2,21 @@
 //  OpenShift sample Node application
 var express = require('express');
 var fs      = require('fs');
+var mongojs = require("mongojs");
+var http = require("http");
+var path = require('path');
+
+
+
+var db;
+fs.readFile('password.txt', 'utf8', function (err,data) {
+  if (err) {
+    return console.log(err);
+  }
+    password = data;
+    var uri = "mongodb://nodejs:" + password + "@ds029807.mongolab.com:29807/utopical";
+    db = mongojs.connect(uri, ["tweets", "users"]);
+});
 
 
 /**
@@ -44,7 +59,7 @@ var SampleApp = function() {
 
         //  Local cache for static content.
         self.zcache['index.html'] = fs.readFileSync('./index.html');
-        // self.zcache['dev.html'] = fs.readFileSync('./dev.html');
+        self.zcache['dev.html'] = fs.readFileSync('./dev.html');
     };
 
 
@@ -95,6 +110,8 @@ var SampleApp = function() {
      */
     self.createRoutes = function() {
         self.routes = { };
+        //var routes = require('./routes/index');
+
 
         self.routes['/asciimo'] = function(req, res) {
             var link = "http://i.imgur.com/kmbjB.png";
@@ -106,10 +123,25 @@ var SampleApp = function() {
             res.send(self.cache_get('index.html') );
         };
 
-        // self.routes['/dev.html'] = function(req, res) {
-        //     res.setHeader('Content-Type', 'text/html');
-        //     res.send(self.cache_get('dev.html') );
-        // };
+        self.routes['/dev.html'] = function(req, res) {
+            res.setHeader('Content-Type', 'text/html');
+            res.send(self.cache_get('dev.html') );
+        };
+
+        self.routes['/helloworld'] = function(req, res) {
+            res.render('helloworld', { title: 'Hello, World!' })
+        };
+
+        self.routes['/userlist'] = function(req, res) {
+            db.tweets.find({}, { limit : 50 }, function(e, tweets){
+                res.render('userlist', {
+                    "tweets" : tweets,
+                    "tweetfeeds" : ["tweetfeed1", 
+                    "tweetfeed2", "tweetfeed3", "tweetfeed4", 
+                    "tweetfeed5", "tweetfeed6"]
+                });
+            });
+        };
 
     };
 
@@ -123,6 +155,10 @@ var SampleApp = function() {
         //self.app = express.createServer();
         // var express = require("express");
         self.app = express();
+
+        // view engine setup
+        self.app.set('views', path.join(__dirname, 'views'));
+        self.app.set('view engine', 'jade');
         self.app.use(express.static(__dirname + '/public'));
 
         //  Add handlers for the app (from the routes).
@@ -143,6 +179,17 @@ var SampleApp = function() {
         // Create the express server and routes.
         self.initializeServer();
 
+        self.handleErrors();
+
+        self.app.use(function(req,res,next){
+            req.db = db;
+            next();
+        });
+
+        self.app.locals.moment = require('moment');
+        //self.app.use('/', routes);
+
+
     };
 
 
@@ -156,6 +203,46 @@ var SampleApp = function() {
                         Date(Date.now() ), self.ipaddress, self.port);
         });
     };
+
+    // self.app.use(function(req,res,next){
+    //     req.db = db;
+    //     next();
+    // });
+
+self.handleErrors = function(){
+
+        /// catch 404 and forwarding to error handler
+        self.app.use(function(req, res, next) {
+            var err = new Error('Not Found');
+            err.status = 404;
+            next(err);
+        });
+
+        /// error handlers
+
+        // development error handler
+        // will print stacktrace
+        if (self.app.get('env') === 'development') {
+            self.app.use(function(err, req, res, next) {
+                res.status(err.status || 500);
+                res.render('error', {
+                    message: err.message,
+                    error: err
+                });
+            });
+        }
+
+        // production error handler
+        // no stacktraces leaked to user
+        self.app.use(function(err, req, res, next) {
+            res.status(err.status || 500);
+            res.render('error', {
+                message: err.message,
+                error: {}
+            });
+        });
+    };
+
 
 };   /*  Sample Application.  */
 

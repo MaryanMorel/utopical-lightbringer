@@ -19,12 +19,16 @@
 
     <!-- jQuery -->
     <script src="//code.jquery.com/jquery-1.10.2.min.js"></script>
+
+	<!-- Angular -->
+    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.3.14/angular.min.js"></script>
   
   </head>
 
   <body>
-    
-<div class="container">
+
+<div ng-app="">
+	<div class="container">
         <div class="row">
             <div class="tweetfeed" id="tweetfeed1"><p>Box 1</p></div>
             <div class="tweetfeed" id="tweetfeed2"><p>Box 2</p></div>
@@ -35,7 +39,8 @@
             </div>
         </div>
     </div>
-  
+</div>
+
     
     <script id="tweetTemplate" type="text/x-handlebars-template">​
     <div class="ribbitWrapper">
