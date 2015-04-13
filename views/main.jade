@@ -6,18 +6,78 @@ block content
 			each tweetfeed, i in tweetfeeds
 				div.tweetfeed(id=tweetfeed)
 					each tweet, i in tweets
+						//- Tweet treatment
+						- var profile_url = "https://twitter.com/" + tweet.user.screen_name;
+						- var status_url = profile_url + "/status/" + tweet.id_str;
+						- var photos = [];
+
+						//- first remove media links
+						- var sanitized_tweet = tweet.text;
+						if tweet.entities && tweet.entities.media && tweet.entities.media.length > 0
+								each media in tweet.entities.media
+									if media.type == "photo"
+										- photos.push({"url":media.url, "media_url":media.media_url});
+										- sanitized_tweet = sanitized_tweet.replace(media.url, "");
+
+						//- then add links to hashtags, mentions, urls etc.
+						- var sanitized_tweet = [{"escape":false, "text":sanitized_tweet}];
+						- var replace_in_sanitized_tweet = function(sanitized_tweet, non_escape_to_remove, escape_to_add){
+						- 	var tmp_sanitized_tweet = [];
+						- 	for (var i=0; i < sanitized_tweet.length; i++) {
+						- 		part = sanitized_tweet[i];
+						- 		if (part && !(part.escape) && part.text.indexOf(non_escape_to_remove) > -1) {
+						- 			for (var j=0; j< part.text.split(non_escape_to_remove).length; j++) {
+						- 				splitted_part = part.text.split(non_escape_to_remove)[j];
+						- 				tmp_sanitized_tweet.push({"escape":false, "text":splitted_part});
+						- 				tmp_sanitized_tweet.push({"escape":true, "text":escape_to_add});
+						- 			}
+						- 			tmp_sanitized_tweet.pop()
+						- 		}
+						- 		else {
+						- 			tmp_sanitized_tweet.push(part);
+						- 		}
+						- 	}
+						- 	sanitized_tweet = tmp_sanitized_tweet;
+						- 	return sanitized_tweet;
+						- }
+						//- User mentions (@mister)
+						if tweet.entities && tweet.entities.user_mentions && tweet.entities.user_mentions.length > 0
+							each user_mention in tweet.entities.user_mentions
+								- var user_mention_text = "@" + user_mention.screen_name;
+								- var user_mention_url = '<a href="https://twitter.com/' + user_mention.screen_name + '">@' + user_mention.screen_name +'</a>';
+								- sanitized_tweet = replace_in_sanitized_tweet(sanitized_tweet, user_mention_text, user_mention_url);
+						//- hashtags (#topic)
+						if tweet.entities && tweet.entities.hashtags && tweet.entities.hashtags.length > 0
+							each hashtag in tweet.entities.hashtags
+								- var hashtag_text = "#" + hashtag.text;
+								- var hashtag_url = '<a href="https://twitter.com/hashtag/' + hashtag.text + '?src=hash">#' + hashtag.text +'</a>';
+								- sanitized_tweet = replace_in_sanitized_tweet(sanitized_tweet, hashtag_text, hashtag_url);
+						//- urls
+						if tweet.entities && tweet.entities.urls && tweet.entities.urls.length > 0
+							each url in tweet.entities.urls
+								- var url_text = url.url;
+								- var url_url = '<a href="' + url.expanded_url + '">' + url.display_url +'</a>';
+								- sanitized_tweet = replace_in_sanitized_tweet(sanitized_tweet, url_text, url_url);
+
+						//- Tweet display
 						div.tweetWrapper
-							img.avatar(src=tweet.user.profile_image_url)
+							a(href=profile_url)
+								img.avatar(src=tweet.user.profile_image_url)
 							div.tweet-content
 								header.tweet-header
-									div.time 
-										span='' + moment.duration( new moment() - moment(new Date(tweet.created_at)) ).humanize()
-									div.account-inline
-										span.name #{tweet.user.name}
-										span.screen-name @#{tweet.user.screen_name}
-								p #{tweet.text}
-								if tweet.entities && tweet.entities.media && tweet.entities.media.length > 0
-									each media in tweet.entities.media
-										if media.type == "photo"
-											a(href=tweet.entities.media[0].url)
-												div.cropped-img(style="background-image: url('#{tweet.entities.media[0].media_url}');")
+									a(href=status_url)
+										div.time 
+											span='' + moment.duration( new moment() - moment(new Date(tweet.created_at)) ).humanize()
+									a(href=profile_url)
+										div.account-inline
+											span.name #{tweet.user.name}
+											span.screen-name @#{tweet.user.screen_name}
+								p
+									each part in sanitized_tweet
+										if part.escape
+											span!=part.text
+										else
+											span=part.text
+								each photo in photos
+									a(href=photo.url)
+										div.cropped-img(style="background-image: url('#{photo.media_url}');")
