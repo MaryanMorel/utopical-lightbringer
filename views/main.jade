@@ -21,23 +21,23 @@ block content
 					alert("yp");
 				};
 				var alert;
-			    $scope.showAlert = showAlert;
-			    $scope.hasAlert = function() { return !!alert };
-			    $scope.userName = $scope.userName || 'Bobby';
-			    // Dialog #1 - Show simple alert dialog and cache
-			    // reference to dialog instance
-			    function showAlert() {
-			      alert = $mdDialog.alert()
-			        .title('Attention, ' + $scope.userName)
-			        .content('This is an example of how easy dialogs can be!')
-			        .ok('Close');
-			      $mdDialog
-			          .show( alert )
-			          .finally(function() {
-			            alert = undefined;
-			          });
-			    }
-			}])
+				$scope.showAlert = showAlert;
+				$scope.hasAlert = function() { return !!alert };
+				$scope.userName = $scope.userName || 'Bobby';
+				// Dialog #1 - Show simple alert dialog and cache
+				// reference to dialog instance
+				function showAlert() {
+					alert = $mdDialog.alert()
+						.title('Attention, ' + $scope.userName)
+						.content('This is an example of how easy dialogs can be!')
+						.ok('Close');
+					$mdDialog
+						.show( alert )
+						.finally(function() {
+							alert = undefined;
+						});
+				}
+			}]);
 
 
 
