@@ -5,7 +5,7 @@ block content
 		md-toolbar(layout="row")
 				button.menuBtn(ng-click="toggleSidenav('left')")
 					span
-				h1(class="md-toolbar-tools", layout-align-gt-sm="center") Utopical : tweet classification
+				h1(class="md-toolbar-tools", layout-align-gt-sm="center") Utopical : tweet classification2
 
 		div(layout="row", flex)
 			include sidenav.jade
@@ -36,6 +36,47 @@ block content
 						.finally(function() {
 							alert = undefined;
 						});
+				}
+				
+				$scope.items = [1, 2, 3];
+				$scope.showDialog = function($event) {
+					 var parentEl = angular.element(document.body);
+					 $mdDialog.show({
+						parent: parentEl,
+						targetEvent: $event,
+						//- template:
+						//-   '<md-dialog aria-label="List dialog">' +
+						//-   '  <md-content>'+
+						//-   '	 <md-list>'+
+						//-   '		<md-item ng-repeat="item in items">'+
+						//-   '		 <p>Number {{item}}</p>' +
+						//-   '		</md-item>'+
+						//-   '	 </md-list>'+
+						//-   '  </md-content>' +
+						//-   '  <div class="md-actions">' +
+						//-   '	 <md-button ng-click="closeDialog()">' +
+						//-   '		Close Dialog' +
+						//-   '	 </md-button>' +
+						//-   '  </div>' +
+						//-   '</md-dialog>',
+						templateUrl:"dialog_template.html",
+						locals: {
+						  items: $scope.items
+						},
+						controller: DialogController
+					});
+					function DialogController(scope, $mdDialog, items) {
+					  scope.items = items;
+					  scope.closeDialog = function() {
+						 $mdDialog.hide();
+					  }
+					}
+				 }
+
+				$scope.testDialog = function () {
+				console.log("test");
+				console.log($mdDialog);
+				dlg = $mdDialog.show('Something Happened!','Something happened that I need to tell you.');
 				}
 			}]);
 

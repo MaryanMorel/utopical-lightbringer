@@ -1,4 +1,4 @@
-md-sidenav(layout="column", class="md-sidenav-left md-whiteframe-z2", md-component-id="left", md-is-locked-open="false")
+md-sidenav(layout="column", class="md-sidenav-left md-whiteframe-z2", md-component-id="left", md-is-locked-open="true")
 	md-toolbar.md-theme-indigo
 		h1.md-toolbar-tools Menu
 	md-content
@@ -19,7 +19,7 @@ md-sidenav(layout="column", class="md-sidenav-left md-whiteframe-z2", md-compone
 			md-divider
 			md-subheader Misc
 			md-item
-				md-item-content(md-ink-ripple, layout="row", layout-align="start center", ng-click="showAlert()")
+				md-item-content(md-ink-ripple, layout="row", layout-align="start center", ng-click="showDialog($event)")
 					div.inset
 						img(src="icons/settings.svg")
 					div.inset.

@@ -1,0 +1,8 @@
+md-dialog(aria-label="List dialog")
+	md-content
+		md-list
+			md-item(ng-repeat="item in items")
+				p Number {{item}}
+	div.md-actions
+		md-button(ng-click="closeDialog()")
+			Close Dialog

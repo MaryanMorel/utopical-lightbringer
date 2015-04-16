@@ -5,59 +5,74 @@ var fs      = require('fs');
 var mongojs = require("mongojs");
 var http = require("http");
 var path = require('path');
+var util = require('util');
+var routes = require('./routes');
+var User = require('./user.js');
+var SQLHandler = require('./SQLHandler.js');
 
-
-
-// var db;
-// fs.readFile('password.txt', 'utf8', function (err,data) {
-//   if (err) {
-//     return console.log(err);
-//   }
-//     password = data;
-//     var uri = "mongodb://nodejs:" + password + "@ds029807.mongolab.com:29807/utopical";
-//     db = mongojs.connect(uri, ["tweets", "users"]);
+// var Twitter = require('twitter');
+ 
+// var client = new Twitter({
+//   consumer_key: 'nmvjCuaPZXQshSRHU4OEeceYf',
+//   consumer_secret: 'NgDAsOH3yCPAbq1wb1FMrYeQSKDpzZiwKckadLpWcYyCSRVKVU',
+//   access_token_key: '3089105255-Tk2yPdqnFqQ5pDCIGXos5IXOVR5Fo1u7jJeZzkp',
+//   access_token_secret: '7MbNI2i7B2lQOtO3fhzqfVovuVLOo8hzJlJGb0OUFMdnz'
 // });
+ 
+// var params = {screen_name: 'nodejs'};
+// client.get('statuses/user_timeline', params, function(error, tweets, response){
+//   if (!error) {
+//     console.log(tweets[0].text);
+//   }
+//   else {
+//     console.log(error);
+//   }
+// });
+
 
 var db;
 
+var passport = require('passport')
+  , TwitterStrategy = require('passport-twitter').Strategy;
 
-var file = "../main.db";
-var exists = fs.existsSync(file);
-if (exists){
-    var sqlite3 = require("sqlite3").verbose();
-    var dbSqlite = new sqlite3.Database(file);
 
-    dbSqlite.each("SELECT * FROM mongo_password WHERE id=1", function(err, rows){
-        if (err) {
-            console.log(err);
-        }
-        else {
-            var password = rows["pwd"];
-            var uri = "mongodb://nodejs:" + password + "@ds029807.mongolab.com:29807/utopical";
-            db = mongojs.connect(uri, ["tweets", "users"]);
-        }
-    });
+passport.use(new TwitterStrategy({
+    consumerKey: 'nmvjCuaPZXQshSRHU4OEeceYf',
+    consumerSecret: 'NgDAsOH3yCPAbq1wb1FMrYeQSKDpzZiwKckadLpWcYyCSRVKVU',
+    callbackURL: "http://localhost:8080/auth/twitter/callback"
+},
+function(accessToken, refreshToken, profile, done) {
+ process.nextTick(function () {
+    console.log("accessToken "  + accessToken)
+    console.log("refreshToken " + refreshToken)
+    SQLHandler.save_user(accessToken, refreshToken, profile);
+    return done(null, profile);
+ });
 }
-else {
-    console.log("cannot connect to local file try distant database")
-    var mysql      = require('mysql');
-    var connection = mysql.createConnection({
-      host     : '552bb4aa4382ecad03000048-utopical.rhcloud.com',
-      port     : '39871',
-      user     : 'adminp2uV8Z4',
-      password : '4YyWmAsb-DNS',
-      database : 'main'
-    });
+));
 
-    connection.connect();
-    connection.query('SELECT * from mongo_password WHERE id=1', function(err, rows, fields) {
-      if (err) throw err;
-      var password = rows[0]["pwd"];
-        var uri = "mongodb://nodejs:" + password + "@ds029807.mongolab.com:29807/utopical";
-        db = mongojs.connect(uri, ["tweets", "users"]);
-    });
-    connection.end();
-}
+SQLHandler.getUserById("30891052553");
+
+// seralize and deseralize
+passport.serializeUser(function(user, done) {
+    done(null, user.id);
+});
+
+passport.deserializeUser(function(id, done) {
+    var user = {"id":id, "test":"test2"};
+    JSON.stringify(user, null, 4);
+    done(null, user);
+    // User.findById(id, function(err, user){
+    //     console.log(user);
+    //     if(!err) done(null, user);
+    //     else done(err, null);
+    // })
+});
+
+
+var db;
+var dbSqlite;
+
 /**
  *  Define the sample application.
  */
@@ -160,6 +175,8 @@ var SampleApp = function() {
 
 
         self.routes['/'] = function(req, res) {
+            var db = SQLHandler.mongoDB;
+
             db.tweets.find({}, { limit : 50 }, function(e, tweets){
                 res.render('main', {
                     "tweets" : tweets,
@@ -168,6 +185,15 @@ var SampleApp = function() {
                     "tweetfeed5", "tweetfeed6"]
                 });
             });
+
+            // res.render('main', {
+            //         "title" : "Utopical",
+            //         "tweets" : {},
+            //         "tweetfeeds" : ["tweetfeed1", 
+            //         "tweetfeed2", "tweetfeed3", "tweetfeed4", 
+            //         "tweetfeed5", "tweetfeed6"]
+                
+            // });
         };
     };
 
@@ -183,14 +209,44 @@ var SampleApp = function() {
         self.app = express();
 
         // view engine setup
-        self.app.set('views', path.join(__dirname, 'views'));
-        self.app.set('view engine', 'jade');
-        self.app.use(express.static(__dirname + '/public'));
+        self.app.configure(function() {
+          self.app.set('views', __dirname + '/views');
+          self.app.set('view engine', 'jade');
+          self.app.use(express.logger());
+          self.app.use(express.cookieParser());
+          self.app.use(express.bodyParser());
+          self.app.use(express.methodOverride());
+          self.app.use(express.session({ secret: 'my_precious' }));
+          self.app.use(passport.initialize());
+          self.app.use(passport.session());
+          self.app.use(self.app.router);
+          self.app.use(express.static(__dirname + '/public'));
+        });
+
 
         //  Add handlers for the app (from the routes).
         for (var r in self.routes) {
             self.app.get(r, self.routes[r]);
         }
+
+        self.app.get('/login', routes.index);
+        self.app.get('/ping', routes.ping);
+        self.app.get('/account', ensureAuthenticated, function(req, res){
+            JSON.stringify(req.user, null, 4);
+            res.render('account', { user: req.user,
+                                    title:"account"});
+        });
+
+        self.app.get('/auth/twitter',
+          passport.authenticate('twitter'),
+          function(req, res){
+          });
+        self.app.get('/auth/twitter/callback', 
+          passport.authenticate('twitter', { failureRedirect: '/' }),
+          function(req, res) {
+            res.redirect('/account');
+          });
+
     };
 
 
@@ -232,6 +288,7 @@ var SampleApp = function() {
 
 self.handleErrors = function(){
 
+
         /// catch 404 and forwarding to error handler
         self.app.use(function(req, res, next) {
             var err = new Error('Not Found');
@@ -245,10 +302,12 @@ self.handleErrors = function(){
         // will print stacktrace
         if (self.app.get('env') === 'development') {
             self.app.use(function(err, req, res, next) {
+                console.log("error : " + JSON.stringify(err, null, 4));
                 res.status(err.status || 500);
                 res.render('error', {
                     message: err.message,
-                    error: err
+                    error: err,
+                    title: "Error"
                 });
             });
         }
@@ -259,7 +318,8 @@ self.handleErrors = function(){
             res.status(err.status || 500);
             res.render('error', {
                 message: err.message,
-                error: {}
+                error: {},
+                title: "Error"
             });
         });
     };
@@ -268,6 +328,11 @@ self.handleErrors = function(){
 };   /*  Sample Application.  */
 
 
+// test authentication
+function ensureAuthenticated(req, res, next) {
+  if (req.isAuthenticated()) { return next(); }
+  res.redirect('/login');
+}
 
 /**
  *  main():  Main code.
