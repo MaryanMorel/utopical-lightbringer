@@ -95,7 +95,8 @@ if (fs.existsSync(file)){
 // Second case : production 
 // Connext to mongodb database that can only be accessed locally on the server
 else {
-  mongoose.connect(process.env.OPENSHIFT_MONGODB_DB_URL);
+  console.log("connecting : " + process.env.OPENSHIFT_MONGODB_DB_URL + "dev")
+  mongoose.connect(process.env.OPENSHIFT_MONGODB_DB_URL + "dev");
   initPasswords();
 }
 
