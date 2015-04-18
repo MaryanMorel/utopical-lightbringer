@@ -5,7 +5,7 @@ var PasswordStorage = require('./PasswordStorage.js')
 var mongoose = require('mongoose');
 var mongojs = require("mongojs");
 var fs = require('fs');
-
+var os = require("os");
 
 
 
@@ -22,12 +22,13 @@ passport.deserializeUser(function(id, done) {
 		})
 });
 
-// Initialize passport with credentials
-var initPassport = function(consumerKey, consumerSecret) {
+// Initialize passport with credentials   
+
+var initPassport = function(consumerKey, consumerSecret, hostname) {
   passport.use(new TwitterStrategy({
 		consumerKey: consumerKey,
 		consumerSecret: consumerSecret,
-		callbackURL: "http://localhost:8080/auth/twitter/callback"
+    callbackURL: hostname + "auth/twitter/callback"
    },
 // Call back when user logs in
    function(accessToken, refreshToken, profile, done) {
@@ -65,12 +66,12 @@ var initMongoDB = function(password){
 }
 
 
-var initPasswords = function() {
+var initPasswords = function(hostname) {
   PasswordStorage.findOne({ "name": "main" }, function(err, passwords) {
     if(err) { console.log(err); }
     if(!err && passwords == null) {console.log("passwords not found"); }
     else {
-        initPassport(passwords.twitterConsumerKey, passwords.twitterConsumerSecret);
+        initPassport(passwords.twitterConsumerKey, passwords.twitterConsumerSecret, hostname);
         initMongoDB(passwords.main_mongo);
      } 
   });
@@ -82,6 +83,7 @@ var initPasswords = function() {
 // First try if the password file exists locally (for localhost test)
 var file = 'password.txt'
 if (fs.existsSync(file)){
+  var hostname = "http://localhost:8080/"
   fs.readFile(file, 'utf8', function (err,data) {
     if (err) {
       return console.log(err);
@@ -89,15 +91,16 @@ if (fs.existsSync(file)){
       password = data;
       // And connect to distant database
       mongoose.connect('mongodb://local_user:' + password + '@ds027491.mongolab.com:27491/local_mongo');
-      initPasswords();
+      initPasswords(hostname);
   });
 }
 // Second case : production 
 // Connext to mongodb database that can only be accessed locally on the server
 else {
+  var hostname = 'http://dev-utopical.rhcloud.com/';
   console.log("connecting : " + process.env.OPENSHIFT_MONGODB_DB_URL + "dev")
   mongoose.connect(process.env.OPENSHIFT_MONGODB_DB_URL + "dev");
-  initPasswords();
+  initPasswords(hostname);
 }
 
 
