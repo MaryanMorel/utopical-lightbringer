@@ -42,8 +42,8 @@ block content
 				
 				$scope.items = [1, 2, 3];
 				$scope.showDialog = function($event) {
-					 var parentEl = angular.element(document.body);
-					 $mdDialog.show({
+					var parentEl = angular.element(document.body);
+					$mdDialog.show({
 						parent: parentEl,
 						targetEvent: $event,
 						//- template:
@@ -68,10 +68,10 @@ block content
 						controller: DialogController
 					});
 					function DialogController(scope, $mdDialog, items) {
-					  scope.items = items;
-					  scope.closeDialog = function() {
-						 $mdDialog.hide();
-					  }
+						scope.items = items;
+						scope.closeDialog = function() {
+							$mdDialog.hide();
+						}
 					}
 				 }
 
