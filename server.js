@@ -2,76 +2,17 @@
 //  OpenShift sample Node application
 var express = require('express');
 var fs      = require('fs');
-var mongojs = require("mongojs");
 var http = require("http");
 var path = require('path');
 var util = require('util');
 var routes = require('./routes');
 var User = require('./user.js');
-var SQLHandler = require('./SQLHandler.js');
-
-// var Twitter = require('twitter');
- 
-// var client = new Twitter({
-//   consumer_key: 'nmvjCuaPZXQshSRHU4OEeceYf',
-//   consumer_secret: 'NgDAsOH3yCPAbq1wb1FMrYeQSKDpzZiwKckadLpWcYyCSRVKVU',
-//   access_token_key: '3089105255-Tk2yPdqnFqQ5pDCIGXos5IXOVR5Fo1u7jJeZzkp',
-//   access_token_secret: '7MbNI2i7B2lQOtO3fhzqfVovuVLOo8hzJlJGb0OUFMdnz'
-// });
- 
-// var params = {screen_name: 'nodejs'};
-// client.get('statuses/user_timeline', params, function(error, tweets, response){
-//   if (!error) {
-//     console.log(tweets[0].text);
-//   }
-//   else {
-//     console.log(error);
-//   }
-// });
-
-
-var db;
-
+var auth = require('./authentication.js');
 var passport = require('passport')
-  , TwitterStrategy = require('passport-twitter').Strategy;
-
-
-passport.use(new TwitterStrategy({
-    consumerKey: 'nmvjCuaPZXQshSRHU4OEeceYf',
-    consumerSecret: 'NgDAsOH3yCPAbq1wb1FMrYeQSKDpzZiwKckadLpWcYyCSRVKVU',
-    callbackURL: "http://localhost:8080/auth/twitter/callback"
-},
-function(accessToken, refreshToken, profile, done) {
- process.nextTick(function () {
-    console.log("accessToken "  + accessToken)
-    console.log("refreshToken " + refreshToken)
-    SQLHandler.save_user(accessToken, refreshToken, profile);
-    return done(null, profile);
- });
-}
-));
-
-SQLHandler.getUserById("30891052553");
-
-// seralize and deseralize
-passport.serializeUser(function(user, done) {
-    done(null, user.id);
-});
-
-passport.deserializeUser(function(id, done) {
-    var user = {"id":id, "test":"test2"};
-    JSON.stringify(user, null, 4);
-    done(null, user);
-    // User.findById(id, function(err, user){
-    //     console.log(user);
-    //     if(!err) done(null, user);
-    //     else done(err, null);
-    // })
-});
 
 
 var db;
-var dbSqlite;
+
 
 /**
  *  Define the sample application.
@@ -164,18 +105,9 @@ var SampleApp = function() {
      *  Create the routing table entries + handlers for the application.
      */
     self.createRoutes = function() {
-        self.routes = { };
-        //var routes = require('./routes/index');
 
-
-        self.routes['/asciimo'] = function(req, res) {
-            var link = "http://i.imgur.com/kmbjB.png";
-            res.send("<html><body><img src='" + link + "'></body></html>");
-        };
-
-
-        self.routes['/'] = function(req, res) {
-            var db = SQLHandler.mongoDB;
+        self.app.get('/', ensureAuthenticated, function(req, res) {
+            var db = auth.mongoDB;
 
             db.tweets.find({}, { limit : 50 }, function(e, tweets){
                 res.render('main', {
@@ -185,16 +117,34 @@ var SampleApp = function() {
                     "tweetfeed5", "tweetfeed6"]
                 });
             });
+          });
 
-            // res.render('main', {
-            //         "title" : "Utopical",
-            //         "tweets" : {},
-            //         "tweetfeeds" : ["tweetfeed1", 
-            //         "tweetfeed2", "tweetfeed3", "tweetfeed4", 
-            //         "tweetfeed5", "tweetfeed6"]
-                
-            // });
-        };
+        self.app.get('/login', routes.index);
+        self.app.get('/logout', function(req, res){
+          req.logout();
+          res.redirect('/');
+        });
+
+        self.app.get('/account', ensureAuthenticated, function(req, res){
+          User.findById(req.session.passport.user, function(err, user) {
+            if(err) { 
+              console.log(err); 
+            } else {
+              res.render('account', { user: user});
+            }
+          })
+        })
+
+        self.app.get('/auth/twitter',
+          passport.authenticate('twitter'),
+          function(req, res){
+          });
+        self.app.get('/auth/twitter/callback', 
+          passport.authenticate('twitter', { failureRedirect: '/' }),
+          function(req, res) {
+            res.redirect('/');
+          });
+
     };
 
 
@@ -203,16 +153,15 @@ var SampleApp = function() {
      *  the handlers.
      */
     self.initializeServer = function() {
-        self.createRoutes();
-        //self.app = express.createServer();
-        // var express = require("express");
+        
+
         self.app = express();
 
         // view engine setup
         self.app.configure(function() {
           self.app.set('views', __dirname + '/views');
           self.app.set('view engine', 'jade');
-          self.app.use(express.logger());
+          //self.app.use(express.logger());
           self.app.use(express.cookieParser());
           self.app.use(express.bodyParser());
           self.app.use(express.methodOverride());
@@ -222,30 +171,6 @@ var SampleApp = function() {
           self.app.use(self.app.router);
           self.app.use(express.static(__dirname + '/public'));
         });
-
-
-        //  Add handlers for the app (from the routes).
-        for (var r in self.routes) {
-            self.app.get(r, self.routes[r]);
-        }
-
-        self.app.get('/login', routes.index);
-        self.app.get('/ping', routes.ping);
-        self.app.get('/account', ensureAuthenticated, function(req, res){
-            JSON.stringify(req.user, null, 4);
-            res.render('account', { user: req.user,
-                                    title:"account"});
-        });
-
-        self.app.get('/auth/twitter',
-          passport.authenticate('twitter'),
-          function(req, res){
-          });
-        self.app.get('/auth/twitter/callback', 
-          passport.authenticate('twitter', { failureRedirect: '/' }),
-          function(req, res) {
-            res.redirect('/account');
-          });
 
     };
 
@@ -260,16 +185,10 @@ var SampleApp = function() {
 
         // Create the express server and routes.
         self.initializeServer();
-
+        self.createRoutes();
         self.handleErrors();
 
-        self.app.use(function(req,res,next){
-            req.db = db;
-            next();
-        });
-
         self.app.locals.moment = require('moment');
-
 
     };
 
@@ -287,7 +206,6 @@ var SampleApp = function() {
 
 
 self.handleErrors = function(){
-
 
         /// catch 404 and forwarding to error handler
         self.app.use(function(req, res, next) {

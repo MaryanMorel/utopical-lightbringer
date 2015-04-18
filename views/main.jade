@@ -13,7 +13,8 @@ block content
 
 		script(type="text/javascript").
 			var app = angular.module('StarterApp', ['ngMaterial']);
-			app.controller('AppCtrl', ['$scope', '$mdSidenav', '$mdDialog', function($scope, $mdSidenav, $mdDialog){
+			app.controller('AppCtrl', ['$scope', '$mdSidenav', '$mdDialog', '$location', '$window',
+				function($scope, $mdSidenav, $mdDialog, $location, $window){
 				$scope.toggleSidenav = function(menuId) {
 					$mdSidenav(menuId).toggle();
 				};
@@ -37,6 +38,7 @@ block content
 							alert = undefined;
 						});
 				}
+				
 				
 				$scope.items = [1, 2, 3];
 				$scope.showDialog = function($event) {
@@ -73,11 +75,10 @@ block content
 					}
 				 }
 
-				$scope.testDialog = function () {
-				console.log("test");
-				console.log($mdDialog);
-				dlg = $mdDialog.show('Something Happened!','Something happened that I need to tell you.');
-				}
+
+				$scope.go = function ( path ) {
+					$window.location.assign(path );
+				};
 			}]);
 
 
