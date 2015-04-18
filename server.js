@@ -6,7 +6,7 @@ var http = require("http");
 var path = require('path');
 var util = require('util');
 var routes = require('./routes');
-var User = require('./user.js');
+var User = require('./User.js');
 var auth = require('./authentication.js');
 var passport = require('passport')
 

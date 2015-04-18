@@ -1,6 +1,6 @@
 var passport = require('passport')
 var TwitterStrategy = require('passport-twitter').Strategy;
-var User = require('./user.js')
+var User = require('./User.js')
 var PasswordStorage = require('./passwordstorage.js')
 var mongoose = require('mongoose');
 var mongojs = require("mongojs");

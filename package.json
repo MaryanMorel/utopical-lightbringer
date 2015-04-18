@@ -31,9 +31,7 @@
     "mongoose": "^4.0.1",
     "mysql": "^2.6.1",
     "passport": "^0.2.1",
-    "passport-twitter": "^1.0.3",
-    "sqlite3": "^3.0.5",
-    "twitter": "^1.2.5"
+    "passport-twitter": "^1.0.3"
   },
   "devDependencies": {},
   "bundleDependencies": [],
