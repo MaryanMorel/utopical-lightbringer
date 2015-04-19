@@ -6,7 +6,7 @@ var http = require("http");
 var path = require('path');
 var util = require('util');
 var routes = require('./routes');
-var User = require('./User.js');
+var User = require('./models/User.js');
 var auth = require('./authentication.js');
 var passport = require('passport')
 
@@ -111,6 +111,7 @@ var SampleApp = function() {
 
             db.tweets.find({}, { limit : 50 }, function(e, tweets){
                 res.render('main', {
+                    "title" : "Utopical",
                     "tweets" : tweets,
                     "tweetfeeds" : ["tweetfeed1", 
                     "tweetfeed2", "tweetfeed3", "tweetfeed4", 
@@ -118,6 +119,14 @@ var SampleApp = function() {
                 });
             });
           });
+        // res.render('main', {
+        //             "title" : "Utopical",
+        //             "tweets" : [],
+        //             "tweetfeeds" : ["tweetfeed1", 
+        //             "tweetfeed2", "tweetfeed3", "tweetfeed4", 
+        //             "tweetfeed5", "tweetfeed6"]
+        //         })
+        // });
 
         self.app.get('/login', routes.index);
         self.app.get('/logout', function(req, res){
@@ -125,15 +134,6 @@ var SampleApp = function() {
           res.redirect('/');
         });
 
-        self.app.get('/account', ensureAuthenticated, function(req, res){
-          User.findById(req.session.passport.user, function(err, user) {
-            if(err) { 
-              console.log(err); 
-            } else {
-              res.render('account', { user: user});
-            }
-          })
-        })
 
         self.app.get('/auth/twitter',
           passport.authenticate('twitter'),

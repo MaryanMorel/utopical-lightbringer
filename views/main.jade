@@ -5,7 +5,7 @@ block content
 		md-toolbar(layout="row")
 				button.menuBtn(ng-click="toggleSidenav('left')")
 					span
-				h1(class="md-toolbar-tools", layout-align-gt-sm="center") Utopical : tweet classification2
+				h1(class="md-toolbar-tools", layout-align-gt-sm="center") Utopical : tweet classification
 
 		div(layout="row", flex)
 			include sidenav.jade
@@ -13,8 +13,8 @@ block content
 
 		script(type="text/javascript").
 			var app = angular.module('StarterApp', ['ngMaterial']);
-			app.controller('AppCtrl', ['$scope', '$mdSidenav', '$mdDialog', '$location', '$window',
-				function($scope, $mdSidenav, $mdDialog, $location, $window){
+			app.controller('AppCtrl', ['$scope', '$mdSidenav', '$mdDialog', '$window',
+				function($scope, $mdSidenav, $mdDialog, $window){
 				$scope.toggleSidenav = function(menuId) {
 					$mdSidenav(menuId).toggle();
 				};

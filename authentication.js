@@ -1,7 +1,7 @@
 var passport = require('passport')
 var TwitterStrategy = require('passport-twitter').Strategy;
-var User = require('./User.js')
-var PasswordStorage = require('./PasswordStorage.js')
+var User = require('./models/User.js')
+var PasswordStorage = require('./models/PasswordStorage.js')
 var mongoose = require('mongoose');
 var mongojs = require("mongojs");
 var fs = require('fs');
@@ -11,12 +11,10 @@ var os = require("os");
 
 // how to exchange data beetween passport and mongo_db
 passport.serializeUser(function(user, done) {
-		console.log('serializeUser: ' + user._id)
 		done(null, user._id);
 });
 passport.deserializeUser(function(id, done) {
 		User.findById(id, function(err, user){
-				console.log(user);
 				if(!err) done(null, user);
 				else done(err, null);
 		})
@@ -98,7 +96,6 @@ if (fs.existsSync(file)){
 // Connext to mongodb database that can only be accessed locally on the server
 else {
   var hostname = 'http://dev-utopical.rhcloud.com/';
-  console.log("connecting : " + process.env.OPENSHIFT_MONGODB_DB_URL + "dev")
   mongoose.connect(process.env.OPENSHIFT_MONGODB_DB_URL + "dev");
   initPasswords(hostname);
 }
