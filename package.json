@@ -34,7 +34,7 @@
     "passport": "^0.2.1",
     "passport-twitter": "^1.0.3",
     "segfault-handler": "^0.2.4",
-    "zerorpc": "file:../../../../../var/folders/pk/rdmqqjps7n5b_j9ynvf5d8nh0000gn/T/npm-5838-18ea9abf/git-cache-7fe0f209bf18/53d80b44b7680857dc465ffade1ceb5dfc25c70c"
+    "zerorpc": "Mbompr/zerorpc-node"
   },
   "devDependencies": {},
   "bundleDependencies": [],
