@@ -7,11 +7,24 @@ var path = require('path');
 var util = require('util');
 var routes = require('./routes');
 var User = require('./models/User.js');
+var Tweet = require('./models/Tweet.js');
+var Snapshot = require('./models/Snapshot.js');
 var auth = require('./authentication.js');
 var passport = require('passport')
+var async = require("async");
 
+var SegfaultHandler = require('segfault-handler');
+
+SegfaultHandler.registerHandler();
+
+// SegfaultHandler.causeSegfault(); // simulates a buggy native module that dereferences NULL
 
 var db;
+
+
+var zerorpc = require("zerorpc");
+
+
 
 
 /**
@@ -106,27 +119,8 @@ var SampleApp = function() {
      */
     self.createRoutes = function() {
 
-        self.app.get('/', ensureAuthenticated, function(req, res) {
-            var db = auth.mongoDB;
+        self.app.get('/', ensureAuthenticated, routes.getSortedTweets);
 
-            db.tweets.find({}, { limit : 50 }, function(e, tweets){
-                res.render('main', {
-                    "title" : "Utopical",
-                    "tweets" : tweets,
-                    "tweetfeeds" : ["tweetfeed1", 
-                    "tweetfeed2", "tweetfeed3", "tweetfeed4", 
-                    "tweetfeed5", "tweetfeed6"]
-                });
-            });
-          });
-        // res.render('main', {
-        //             "title" : "Utopical",
-        //             "tweets" : [],
-        //             "tweetfeeds" : ["tweetfeed1", 
-        //             "tweetfeed2", "tweetfeed3", "tweetfeed4", 
-        //             "tweetfeed5", "tweetfeed6"]
-        //         })
-        // });
 
         self.app.get('/login', routes.index);
         self.app.get('/logout', function(req, res){
@@ -134,6 +128,28 @@ var SampleApp = function() {
           res.redirect('/');
         });
 
+        self.app.get('/treatment', function(req, res){
+          if (self.app.work_ready){
+            res.redirect('/');
+          }
+          else {
+            if (!self.app.launched_request){
+              self.app.client.invoke("sleep_and_wake", "15", function(error, result, more) {
+                  console.log(result);
+                  self.app.work_ready = true;
+              });
+              self.app.launched_request = true;
+            }
+
+            var loading_gifs = JSON.parse(fs.readFileSync('loading_gif.js', 'utf8'));
+            var randomIndex = Math.floor(Math.random() * loading_gifs.length)
+
+
+            res.render('progress', {
+                gif: loading_gifs[randomIndex]
+            });
+          }
+        });
 
         self.app.get('/auth/twitter',
           passport.authenticate('twitter'),
@@ -142,7 +158,7 @@ var SampleApp = function() {
         self.app.get('/auth/twitter/callback', 
           passport.authenticate('twitter', { failureRedirect: '/' }),
           function(req, res) {
-            res.redirect('/');
+            res.redirect('/treatment');
           });
 
     };
@@ -171,6 +187,11 @@ var SampleApp = function() {
           self.app.use(self.app.router);
           self.app.use(express.static(__dirname + '/public'));
         });
+
+        self.app.client = new zerorpc.Client();
+        self.app.client.connect("tcp://127.0.0.1:14242");
+        self.app.work_ready = false;
+        self.app.launched_request = false;
 
     };
 

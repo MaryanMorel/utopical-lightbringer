@@ -4,6 +4,7 @@ var mongoose = require('mongoose')
 var User = mongoose.model('User', {
 	oauthID: Number,
 	name: String,
+	screen_name: String,
 	created: Date,
 	accessToken: String,
 	refreshToken: String

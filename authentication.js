@@ -6,6 +6,7 @@ var mongoose = require('mongoose');
 var mongojs = require("mongojs");
 var fs = require('fs');
 var os = require("os");
+var util = require('util');
 
 
 
@@ -20,7 +21,26 @@ passport.deserializeUser(function(id, done) {
 		})
 });
 
-// Initialize passport with credentials   
+// Initialize passport with credentials  
+var initTwitter = function(consumerKey, consumerSecret, user){
+  console.log("current user" + util.inspect(user));
+
+  var Twitter = require('twitter');
+   
+  //user.accessToken = '433689807-VFWgvizoaRBTKb7cVaC61mwOrVr3J5cBnjdFihsp';
+  //user.refreshToken = 'axIE7g46rpDXVXJv2fw7K4Ot8wTZaCKWDnYL1IkcFP7QH';
+
+  var client = new Twitter({
+    consumer_key: consumerKey,
+    consumer_secret: consumerSecret,
+    access_token_key: user.accessToken,
+    access_token_secret: user.refreshToken
+  });
+
+  module.exports.Twitter = client;
+   
+}
+
 
 var initPassport = function(consumerKey, consumerSecret, hostname) {
   passport.use(new TwitterStrategy({
@@ -30,23 +50,41 @@ var initPassport = function(consumerKey, consumerSecret, hostname) {
    },
 // Call back when user logs in
    function(accessToken, refreshToken, profile, done) {
+    console.log("accessToken :" + accessToken)
+    console.log("refreshToken :" + refreshToken)
+
+
    User.findOne({ oauthID: profile.id }, function(err, user) {
   	 if(err) { console.log(err); }
-  	 if (!err && user != null) {
-  		 done(null, user);
-  	 } else {
+  	 // if (!err && user != null && user.screen_name) {
+    //   user.accessToken = accessToken;
+    //   user.refreshToken = refreshToken;
+    //   initTwitter(consumerKey, consumerSecret, user);
+    //   user.save(function(err) {
+    //      if(err) { 
+    //        console.log(err); 
+    //      } else {
+    //        console.log("saving user ..." + util.inspect(user));
+    //        done(null, user);
+    //      };
+    //    });
+  		//  done(null, user);
+  	 // } 
+     else {
   		 var user = new User({
   			 oauthID: profile.id,
-  			 name: profile.displayName,
+         name: profile.displayName,
+         screen_name: profile.username,
   			 created: Date.now(),
   			 accessToken: accessToken,
   			 refreshToken: refreshToken
   		 });
+       initTwitter(consumerKey, consumerSecret, user);
   		 user.save(function(err) {
   			 if(err) { 
   				 console.log(err); 
   			 } else {
-  				 console.log("saving user ...");
+  				 console.log("saving user ..." + util.inspect(user));
   				 done(null, user);
   			 };
   		 });
@@ -59,17 +97,23 @@ var initPassport = function(consumerKey, consumerSecret, hostname) {
 // Initialize mongo db connexion with credentials
 var initMongoDB = function(password){
   var uri = "mongodb://nodejs:" + password + "@ds029807.mongolab.com:29807/utopical";
-  mongoDB = mongojs.connect(uri, ["tweets", "users"]);
+  mongoDB = mongojs.connect(uri, ["clusterings"]);
   module.exports.mongoDB = mongoDB;
 }
 
 
 var initPasswords = function(hostname) {
+  // console.log(util.inspect(mongoose.connections[0].collections));
+  // mongoose.connections[0].collections.ensureIndex({ expires: 1 }, { expireAfterSeconds: 10 }, function (err) {
+  //           if (err) throw err;
+  //           changeState('connected');
+  //         });
   PasswordStorage.findOne({ "name": "main" }, function(err, passwords) {
     if(err) { console.log(err); }
     if(!err && passwords == null) {console.log("passwords not found"); }
     else {
-        initPassport(passwords.twitterConsumerKey, passwords.twitterConsumerSecret, hostname);
+        var callBackURL = hostname;// + 'treatment';
+        initPassport(passwords.twitterConsumerKey, passwords.twitterConsumerSecret, callBackURL);
         initMongoDB(passwords.main_mongo);
      } 
   });

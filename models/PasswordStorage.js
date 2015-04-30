@@ -3,7 +3,7 @@ var mongoose = require('mongoose')
 // create a passwords storage model
 var User = mongoose.model('PasswordStorage', {
 	name: String,
-	created: Date,
+	created: { type: Date, default: Date.now },
 	main_mongo: String,
 	twitterConsumerKey: String,
 	twitterConsumerSecret: String
