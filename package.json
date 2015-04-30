@@ -33,8 +33,7 @@
     "mysql": "^2.6.1",
     "passport": "^0.2.1",
     "passport-twitter": "^1.0.3",
-    "segfault-handler": "^0.2.4",
-    "zerorpc": "Mbompr/zerorpc-node"
+    "segfault-handler": "^0.2.4"
   },
   "devDependencies": {},
   "bundleDependencies": [],

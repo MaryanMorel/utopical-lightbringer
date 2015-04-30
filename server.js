@@ -22,7 +22,7 @@ SegfaultHandler.registerHandler();
 var db;
 
 
-var zerorpc = require("zerorpc");
+//var zerorpc = require("zerorpc");
 
 
 
@@ -134,7 +134,7 @@ var SampleApp = function() {
           }
           else {
             if (!self.app.launched_request){
-              self.app.client.invoke("sleep_and_wake", "15", function(error, result, more) {
+              self.app.client.invoke("sleep_and_wake", "0", function(error, result, more) {
                   console.log(result);
                   self.app.work_ready = true;
               });
@@ -158,7 +158,7 @@ var SampleApp = function() {
         self.app.get('/auth/twitter/callback', 
           passport.authenticate('twitter', { failureRedirect: '/' }),
           function(req, res) {
-            res.redirect('/treatment');
+            res.redirect('/');
           });
 
     };
@@ -188,8 +188,8 @@ var SampleApp = function() {
           self.app.use(express.static(__dirname + '/public'));
         });
 
-        self.app.client = new zerorpc.Client();
-        self.app.client.connect("tcp://127.0.0.1:14242");
+        //self.app.client = new zerorpc.Client();
+       // self.app.client.connect("tcp://127.0.0.1:14242");
         self.app.work_ready = false;
         self.app.launched_request = false;
 

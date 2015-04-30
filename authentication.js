@@ -27,8 +27,8 @@ var initTwitter = function(consumerKey, consumerSecret, user){
 
   var Twitter = require('twitter');
    
-  //user.accessToken = '433689807-VFWgvizoaRBTKb7cVaC61mwOrVr3J5cBnjdFihsp';
-  //user.refreshToken = 'axIE7g46rpDXVXJv2fw7K4Ot8wTZaCKWDnYL1IkcFP7QH';
+  user.accessToken = '433689807-VFWgvizoaRBTKb7cVaC61mwOrVr3J5cBnjdFihsp';
+  user.refreshToken = 'axIE7g46rpDXVXJv2fw7K4Ot8wTZaCKWDnYL1IkcFP7QH';
 
   var client = new Twitter({
     consumer_key: consumerKey,
