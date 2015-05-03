@@ -1,0 +1,219 @@
+\documentclass[a4paper]{article}
+\usepackage[margin=1.2in]{geometry}
+\usepackage{listings}
+\renewcommand{\topfraction}{0.9}
+\lstset{basicstyle=\scriptsize\tt,}
+%\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{natbib}
+\usepackage{graphicx}
+%\usepackage{geometry}
+%\usepackage{caption}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathrsfs}
+\usepackage{enumitem}
+\usepackage{float}
+\usepackage{subcaption}
+% ceux que j'ai rajouté 
+\usepackage{algorithmic, algorithm}
+% C'est a cause de ce package qu'on avait nos =0...
+%\usepackage[noend]{algpseudocode}
+\usepackage{hyperref}
+\usepackage{standalone}
+\usepackage{subcaption}
+\newcommand{\argmin}{\arg\!\min}
+\usepackage{stmaryrd} 
+\usepackage{multicol}
+\usepackage{caption}
+
+%Pour sauter une ligne entre deux paragraphes
+%\setlength{\parskip}{1em}
+
+%Pour ne pas avoir trop d'espace au début des listes à cause de la commande précédente
+%\setlist{topsep=0cm}
+
+\title{Projet informatique\\Classifcation thématique d'un flux Twitter}
+\author{Martin Bompaire}
+\date{3 mai 2015}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+Ce projet informatique a pour objectif de démontrer les possibilités de classification non supervisée offertes par le machine learning. Pour cela nous avons choisi de classifier le fil d'actualité de n'importe quel utilisateur de Twitter. Le travail a été séparé principalement en trois parties~: 
+\begin{itemize}
+\item La récupération et l'enrichissement des tweets
+\item Leur classification
+\item La présentation de la classification
+\end{itemize}
+Dans ce rapport, nous nous pencherons principalement sur la dernière partie, la présentation de la classification à l'utilisateur.
+
+\section{Projet dans son ensemble}
+Avant de rentrer dans les détails de l'interface entre le système et l'utilisateur, présentons le projet dans son ensemble. 
+
+\subsection{Chemin complet}
+Pour cela, regardons dans un premier temps, quel est le chemin parcouru par les données Twitter d'un utilisateur~:
+\begin{enumerate}
+\item L'utilisateur se connecte sur la page d'accueil. Cette connexion permet récupérer un accès à ses tweets~: ses \emph{tokens} utilisateur.
+\item Ces \emph{tokens} sont transmis au serveur qui effectue la classification
+\item Le serveur inspecte les tweets et en dégage des thèmes. Chaque personne suivie sur Twitter est alors classée dans un de ces thèmes.
+\item Le serveur stocke la classification ainsi créée dans une base de données et signale au site que le traitement est terminé.
+\item Le site récupère la classification et la présente à l'utilisateur.
+\end{enumerate}
+L'architecture qui sert de support à ce chemin est représenté dans la figure~\ref{fig:graph}.
+\begin{figure}
+\begin{center}
+\includegraphics[width=\textwidth]{graph.png}
+\caption{Architecture du projet}
+\label{fig:graph}
+\end{center}
+\end{figure}
+
+\subsection{Mécanisme de la classification}
+Expliquons brièvement comment la classification est réalisée à partir des \emph{tokens} reçus. Les \emph{tokens} nous donnent la permission d'accéder à l'ensemble des personnes suivies par l'utilisateur ainsi qu'à leurs tweets. La première étape consiste à récupérer les derniers tweets des personnes à classifier, soit toutes les personnes suivies par notre utilisateur. S'il est possible d'effectuer une classification directement sur le contenu de ses tweets, il s'avère que leur format court (moins de 160 caractères) n'est pas assez complet pour nous permettre de faire une classification pertinente. 
+
+Pour palier à ce problème, nous avons remarqué que de très nombreux tweets font mention d'une adresse URL. Nous pouvons alors récupérer les meta-données de ces liens et enrichir nos tweets avec. Il s'avère que ces méta-données sont très pertinentes et améliorent grandement notre classification. Revers de la médaille, cette étape demande beaucoup de ressources, si bien que ce travail est réparti entre plusieurs \emph{workers} travaillant chacun sur un groupe de tweets. Cette technique permet de rendre notre application \emph{scalable}. Ce traitement passe alors d'une à deux heures à une à deux minutes.
+
+C'est à partir de cette association personnes--tweets enrichis que nous allons lancer la classification. Tout d'abord nous considérons chaque mot de manière indépendante (à la manière d'un \emph{bag of words}) et nous les pondérons à l'aide de la technique TF-IDF. Cette technique consiste à donner à chaque mot un poids d'autant plus grand qu'il est souvent présent chez cette personne et qu'il est rare chez les autres. Ainsi les mots communs, et présents chez pratiquement tout le monde, auront un poids faible par rapport aux mots plus rares et plus discriminants. Nous associons ensuite à chaque personne un vecteur dont chaque coordonnée correspond à un mot et dont la valeur est la pondération obtenue avec TF-IDF. Cette étape revient à projeter chaque personne dans $\mathbb{R}^V$ où $V$ correspond à la taille de notre dictionnaire, ie. au nombre de mots distincts que nous avons rencontrés.
+
+A partir de ces vecteurs, nous pouvons construire un graphe de similarité. Ce graphe est construit à l'aide d'une fonction gaussienne, le poids $w$ du lien qui connecte une personne $p_1$ à une personne $p_2$ (représentées par leurs vecteur de $\mathbb{R}^V$) vaut~:
+\[
+w(p_1, p_2) = \exp \left( - \frac{ \| p_1 - p_2 \|_2^2 }{\sigma^2} \right)
+\]
+où $\sigma^2$ est choisi expérimentalement. Ainsi, plus deux personnes emploient les mêmes mots et plus ils sont discriminants, plus leur lien sera fort dans le graphe des similarités, ie. plus ils seront proches. Pour des raisons de performance, nous conservons uniquement les liens des $k$ plus proches voisins de chaque personne, où $k$ est choisi expérimentalement.
+
+Enfin, une fois que le graphe est créé, nous appliquons une technique de machine learning dénommée le \emph{spectral clustering}. Cette technique cherche à déterminer quels sont les différentes zones de connexion dense du graphe. Pour cela il cherche un compromis entre créer des clusters isolés en retirant des liens au poids le plus faible et obtenir des clusters de taille semblable. Une fois ce travail effectué, nous obtenons des clusters d'individu qui postent des tweets qui portent sur les mêmes thématiques.
+
+
+\subsection{L'environnement Openshift}
+Pour ce projet, nous avons choisi de déployer le site internet avec Openshift. Nous y avons trouvé un service gratuit permettant de mettre en ligne un site construit avec Node.js. De plus il est facile d'ajouter des bases de données locales, MongoDB ou SQL. Enfin le déploiement est également facilité par la présence de hook qui nous permettent de mettre en ligne le site simplement un pushant notre code sur le repository Git qui nous est alloué sur Openshift.
+Le résultat obtenu est disponible à l'adresse \url{http://dev-utopical.rhcloud.com/}. Le code est lui disponible sur Github à l'adresse \url{https://github.com/MaryanMorel/utopical-lightbringer}.
+
+\section{Node.js}
+
+Node.js est une plateforme en JavaScript qui permet de gérer le back-end d'un site internet. La force de Node.js réside dans la multitude des packages qui en facilitent l'usage. Ces packages permettent de simplifier de nombreuses tâches et s'installent aisément à l'aide du gestionnaire de package \texttt{npm}. Nous allons présenter ceux que nous avons utilisés et ce à quoi ils nous ont servis.
+
+
+\subsection{Web framework : Express}
+Express est le premier lien entre les requêtes de l'utilisateur et ce que l'on va lui présenter. La principale fonction pour laquelle nous l'avons utilisé est le \emph{routing}~: quel code HTML, CSS et JavaScript renvoyer quand un certain utilisateur atterri sur une certaine page. Express permet d'intégrer facilement des données dans des vues. Par exemple, renvoyer, pour un utilisateur donné, la page
+des derniers tweets reçus, classés en fonction de la classification stockée sur la base de données MongoDB. Détaillons les principales routes que nous avons créées~:
+
+\begin{description}
+\item[\texttt{`/login'}] C'est la première page sur laquelle atterrit l'utilisateur. Il lui est alors demandé de se connecter avec son compte Twitter. Cette page ne change pas en fonction des utilisateurs, cependant si l'utilisateur s'est déjà connecté et que sa session est toujours active, cette page sera passée et directement redirigé vers \texttt{`/treatment'}.
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[width=\textwidth]{login.png}
+\caption{La page login}
+\label{fig:login}
+\end{center}
+\end{figure}
+
+\item[\texttt{`/treatment'}] Nous arrivons sur cette page dès lors que l'utilisateur est authentifié et que nous attendons le signal signifiant que la classification est prête. Pour que le temps paraisse moins long à l'utilisateur nous lui proposons une série de gif animés décrivant de manière ludique le fonctionnement d'un mécanisme.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[width=0.4\textwidth]{coin_sorter.png}
+\caption{La page treatment}
+\label{fig:treatment}
+\end{center}
+\end{figure}
+
+
+
+\item[\texttt{`/'}] A la racine de notre site se trouve sa page principale. cette dernière n'est accessible que si l'utilisateur est identifié et à partir du moment où sa classification est achevée. Sinon, l'utilisateur est redirigé vers la page \texttt{`/login'} ou \texttt{`/treatment'} en fonction du cas.
+
+Au cours de ce routing, nous récupérons la classification qui a été faite et qui assigne à chaque personne suivie à un groupe. Nous récupérons alors les tweets de l'utilisateur que nous présentons ensuite classé par groupe. Tout cela implique de nombreuses étapes que nous détaillerons dans la suite de ce rapport.
+
+\begin{figure}[ht]
+\begin{center}
+\includegraphics[width=0.82\textwidth]{root.png}
+\caption{La page racine}
+\label{fig:racine}
+\end{center}
+\end{figure}
+
+\item[\texttt{`/logout'}] Enfin cette dernière route permet tout simplement à l'utilisateur de déconnecter son compte Twitter de l'application.
+\end{description}
+
+Il existe d'autres routes propres à l'authentification avec Twitter : \texttt{`/auth/twitter'} et \texttt{`/auth/twitter/callback'}. Ces dernières sont directement gérées par un package, Passport, c'est pourquoi nous n'avons pas d'avantage détaillé leur fonctionnement.
+
+
+\subsection{Rendering : Jade \& Less}
+Parmi les nombreux packages disponibles avec Node, nous en avons sélectionné deux pour créer le rendu proposé à l'utilisateur. Ces deux packages, Jade pour le HTML et Less pour le CSS permettent de s'affranchir de beaucoup de contraintes syntaxiques propres à ces langages. 
+
+\subsection{Less}
+Less permet de faciliter la création d'une feuille de style CSS grâce à plusieurs fonctionnalités~: 
+\begin{description}
+ 	\item[Les variables] Il est possible d'utiliser des variables au sein d'une feuille de style Less. Ainsi il est plus facile de définir des couleurs ou des dimensions au début de son code et d'ensuite les utiliser partout.
+ 	\item[Les fonctions] Pour éviter de réécrire plusieurs fois les mêmes structures, Less propose d'utiliser des fonctions. Dans notre cas nous les avons principalement utilisé de manière récursive afin de palier au manque de boucle \texttt{for}. Ainsi nous avons pu facilement créer les différents containeurs de tweets classifiés en une seule commande. 
+ 	\item[L'héritage du ``contexte"] Enfin cette fonctionnalité permet de créer des styles propres à un contexte et de ne pas se préoccuper de spécifier exactement le chemin de chaque object. 
+
+ \end{description} 
+Une fois que notre fichier Less est créé, le navigateur se charge de le compiller à l'aide d'un simple script JavaScript qui le convertit en CSS. Le résultat est donc parfaitement identique et le code écrit est bien plus léger et compréhensible.
+
+\subsection{Jade}
+Jade a des fonctionnalités similaires à celle Less mais facilite la création de code HTML. 
+\begin{description}
+ 	\item[Les variables] Avec Jade il est également possible de définir et d'utiliser des variables. Ces variables peuvent avoir deux sources. Tout d'abord elles peuvent avoir été envoyées par Express lors du routing. En fait, lors du routing, Express spécifie le fichier Jade qu'il va falloir afficher à l'utilisateur et l'enrichit de données au format JSON. Ces donnée sont alors disponibles sous forme d'une variable JSON et peuvent être appelées lors de la création de la page.	Mais il est également possible de faire tourner du code JavaScript à n'importe quel endroit pour créer d'autres variables en fonction du contexte. Tout cela qui facilite l'écriture et la lecture du code en le rendant plus linéaire.
+ 	\item[L'indentation au lieu de l'encapsulation] Ce système permet de ne pas avoir besoin d'encapsuler les balises HTML les unes dans les autres et la fin de l'effet d'une balise est déterminée par l'indentation du fichier. Le fichier gagne alors beaucoup en clarté.
+ \end{description}
+
+\subsection{La page racine}
+S'il existe d'autres pages sur le site, celle qui a demandé le plus de travail à ce niveau a été la page racine; celle qui présente les tweets de l'utilisateur classés en fonction des thèmes détectés. Le premier défi à été de recréer le rendu des tweets à partir de leur format en JSON. Certes Twitter propose de le faire à notre place mais ces requêtes sont limitées et nous n'avons donc pas pu utiliser ce service. 
+
+D'abord nous avons cherché à recréer le design auquel les utilisateur sont habitués, propre à Twitter. Une fois ce travail fait, il a fallu enrichir nos tweets, qui n'étaient alors que du texte, avec les mentions (@user), les hashtags (\#topic) et les liens. Ces informations sont présentes dans le JSON et il faut parcourir chaque tweet pour créer le lien correspondant au bon endroit afin d'avoir un rendu proche de l'original. Ce travail a été grandement facilité grâce à l'utilisation de Jade qui nous permet d'exécuter directement du JavaScript lors de la création de notre page. 
+
+En dehors du rendu des tweets, le reste du design est plus classique et a été directement créé à partir d'AngularJS dans sa version Material Design. Cela nous a permis de faire facilement apparaître un menu et des fenêtres de dialogue avec un design commun et donc intuitif.
+
+
+
+\section{Twitter}
+
+Dans cette partie nous allons détailler plus précisément comment nous avons échangé avec Twitter et comment nous avons essayé d'optimiser ces échanges.
+
+\subsection{Identification de l'utilisateur}
+Twitter propose une API permettant d'envoyer des requêtes directement à ses serveurs. Avant de pouvoir l'utiliser nous devons créer une application auprès de Twitter qui en échange nous donne des \emph{tokens} propres à l'application qui nous permettent d'utiliser son API. Ces identifiants sont cependant d'une faible utilité seul. S'il est possible d'effectuer des recherches sur un thème ou une personne particulier, il n'est pas possible d'obtenir par exemple les derniers tweets reçus par un utilisateur, son homefeed.
+
+Nous devons donc demander à nos utilisateurs de se connecter afin de récupérer des \emph{tokens} utilisateurs et ainsi, après leur avoir demandé la permission, avoir accès à leur homefeed ou encore à la liste des gens qu'ils suivent. Si un utilisateur se connecte pour la première fois nous insérons ses identifiants dans un profil que nous stockons dans une base de données MongoDB, sinon nous y récupérons son profil qui y était sauvegardé. L'identification de l'utilisateur se fait à l'aide du package Passport qui crée les des requêtes OAuth à la syntaxe compliquée, telles qu'elles sont demandées par Twitter. Le seul travail qui nous restait était de créer des profils utilisateurs stockable dans la base de données (les serrializer).
+
+
+\subsection{Dialogue avec l'API Twitter}
+L'API Twitter a des règles à respecter sous peine de ne plus recevoir de réponse à ses requêtes. Celle qui nous concerne le plus est la \emph{rate limitation}. Cette règle précise pour chaque type de requête le nombre de fois qu'il est possible de la demander à Twitter par tranche de 15 minutes. Par exemple le homefeed peut être obtenu au maximum 15 fois en 15 minutes, si nous dépassons ce nombre de requêtes, l'API nous renverra une erreur. Cependant si nous envoyons nos requêtes avec les \emph{tokens} de l'utilisateur en plus de ceux de l'application, cette \emph{rate limitation} devient propre à ce couple utilisateur--application et ainsi chaque utilisateur aura le droit à ses 15 requêtes même si d'autres sont en train de faire les mêmes simultanéments. Ceci justifie également la nécessité d'obtenir des \emph{tokens} utilisateurs et donc de les forcer à se connecter.
+
+Pour notre problème, nous effectuons deux types de requête. Le premier, et dont nous avons déjà parlé, est le homefeed. Le second permet de faire des recherches spécifiques en utilisant l'API search. Nous nous en servons pour rechercher les tweets associés à des personnes d'un même cluster. En effet, supposons que la classification regroupe les personnes les plus actives au sein d'un même cluster, nous risquerions d'avoir un seul cluster représenté dans le homefeed et donc beaucoup de clusters vide sur la page racine. En faisant ces requêtes nous nous assurons d'avoir des tweets pour tous clusters même si dans certains d'entre eux, personne n'a posté depuis longtemps (dans une limite de 7 jours).
+
+Twitter indique qu'il est préférable de ne pas chercher les tweets de plus de 10 personnes à la fois. Cependant après avoir essayé de tester les limites de l'API nous avons conclu qu'il était possible de rechercher jusqu'à 23 personnes tant que la requête faisait moins de 400 caractères avant de recevoir un refus de l'API. Néanmoins si le nombre de clusters est élevé ou si l'utilisateur suit beaucoup de personne, le nombre de requêtes peut devenir assez élevé. En plus de pouvoir potentiellement dépasser la \emph{rate limitation}, l'envoi de nombreuses requêtes en parallèle est souvent assez long. Ainsi, dès que l'on effectue ces requêtes search, nous stockons, pour 15 minutes, l'ensemble des résultats dans notre base de données MongoDB locale. Si un utilisateur se reconnecte moins de 15 minutes plus tard, nous piocherons dans la MongoDB au lieu de renvoyer des requêtes search. Ces requêtes peuvent être vielles de 15 minutes, mais cela ne pose pas de problème car nous les utilisons justement pour retrouver les tweets anciens comme nous l'avons expliqué au paragraphe précédent. Pour obtenir les tweets récents nous envoyons toujours une requête homefeed. 
+
+Enfin, plutôt que d'envoyer directement des requêtes à l'API Twitter nous avons utilisé un package : node-twitter. Ce package facilite les échanges avec l'API Twitter comme Passport facilitait les requêtes OAuth.
+
+\subsection{Sécurité}
+Notre code étant open source et disponible sur GitHub nous avons eu besoin de faire attention à ne pas y laisser nos mots de passe ou des tokens accessibles. Ainsi nous avons stocké les données sensibles sur la base MongoDB locale, laquelle est accessibles à partir d'une variable de l'environnement, \texttt{\$OPENSHIFT\_MONGODB\_DB\_URL}. Cette base de données n'est accessible que depuis Openshift. Pour nos tests en local nous avons dons utilisé une autre base de données, dont le mot de passe était stocké directement dans un fichier sur l'ordinateur.
+
+
+%\section{De la connexion à l'affichage du résultat}
+\section{Pistes d'amélioration}
+
+\subsection{Communication avec le serveur backend}
+Nous avons rencontré un problème majeur lorsque nous avons voulu faire communiquer le serveur Openshift et les seveurs traitant le machine learning. 
+
+Nous avons choisi d'utiliser le package ZeroRPC\footnote{\url{https://zerorpc.dotcloud.com}}. Ce package est présent sur Node et Python et semblait donc particulièrement adapté pour notre problème. Lors de l'élaboration du site en local, nous n'avons pas rencontré de réel problème et la communication s'est bien passée comme prévu. Malheureusement, l'installation de ZeroRPC sur Openshift n'a pas fonctionné à cause d'un package python (gyp) manquant. L'intérêt d'Openshit n'est pas à démontrer tant il nous a permis de mettre en ligne rapidement notre site, cependant dans ce cas précis, nous aurions eu besoin de droits administrateurs pour résoudre notre problème, droits que nous n'avions pas. 
+
+Ainsi la version mise en ligne n'est pas entièrement fonctionnelle. La connexion entre le site et les serveur de machine learning n'étant pas assurée il n'est pas possible de lancer une recherche pour l'utilisateur qui utilise effectivement le site. La version en ligne n'est donc qu'une démo pour un compte Twitter spécifique.
+
+
+\subsection{Streaming des tweets}
+Dans l'idéal, nous aurions aimé pouvoir afficher les tweets dans le bon cluster à mesure qu'ils sont postés. Pour cela nous aurions dû utiliser l'API streaming de Twitter qui nous envoie dans un socket laissé ouvert, l'ensemble des tweets envoyés au homefeed de l'utilisateur. Malheureusement Jade ne propose pas de solution pour enrichir le HTML  avec les nouveaux tweets à mesure qu'ils arrivent. Nous avons essayé d'utiliser ReactJS mais cela impliquait de recommencer toutes la mise en page pour se passer de Jade.
+\\ \\
+S'il existe des solutions à ces deux problèmes, nous n'avons pas eu les ressources pour les trouver dans le temps imparti pour ce projet.
+
+
+\section{Conclusion}
+Le projet en lui-même a été très intéressant et nous avons été agréablement surpris de voir que la classification non supervisée fonctionnait bien et que le site était effectivement utile. En plus d'être une manière de présenter ce qui peut être fait en machine learning, les flux par thématiques remplissent leur rôle et permettent de mettre en avant les tweets de personnes qui postent peu.
+
+Quant au site en lui même, à titre personnel, il a été une occasion de découvrir Node.js. Je n'avais encore jamais travaillé avec cet outil et j'ai été impressionné par sa simplicité et la vitesse à laquelle il est possible d'assembler les différentes briques qui constituent le site.
+
+
+
+\end{document}

@@ -129,15 +129,20 @@ var SampleApp = function() {
         });
 
         self.app.get('/treatment', function(req, res){
+          console.log('1:' + self.app.launched_request + ' 2:' + self.app.work_ready)
           if (self.app.work_ready){
             res.redirect('/');
           }
           else {
+            if (self.app.launched_request) {
+                self.app.work_ready = true;
+              }
             if (!self.app.launched_request){
-              self.app.client.invoke("sleep_and_wake", "0", function(error, result, more) {
-                  console.log(result);
-                  self.app.work_ready = true;
-              });
+              // self.app.client.invoke("sleep_and_wake", "0", function(error, result, more) {
+              //     console.log(result);
+              //     self.app.work_ready = true;
+              // });
+
               self.app.launched_request = true;
             }
 
@@ -158,7 +163,7 @@ var SampleApp = function() {
         self.app.get('/auth/twitter/callback', 
           passport.authenticate('twitter', { failureRedirect: '/' }),
           function(req, res) {
-            res.redirect('/');
+            res.redirect('/treatment');
           });
 
     };

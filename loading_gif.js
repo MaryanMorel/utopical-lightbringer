@@ -109,7 +109,7 @@
   },
   {
     "filename": "How-a-coin-sorter-works.gif",
-    "text": "How chain is made?",
+    "text": "How does a coin sorter work?",
     "source": "http://www.pbh2.com/astounding/how-things-work-gifs/",
     "delay": 6.90
   }

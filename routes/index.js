@@ -106,10 +106,11 @@ exports.getSortedTweets = function(req, res){
 		// Retrieve clusters on mongoDB
 		function(callback){
 			var db = auth.mongoDB;
-			db.clusterings.find({nb_clusters: n_clusters, ego_id:1000}, { limit : 1 }).sort({_id:-1}, function(e, clusterings){
+			db.clusterings.find({nb_clusters: n_clusters, ego_id:3089105255}, { limit : 1 }).sort({_id:-1}, function(e, clusterings){
 				if (e) callback(null, e);
 				else {
-					var clusters = clusterings[0].content.clusters;
+					// var clusters = clusterings[0].content.clusters;
+					var clusters = clusterings[0].clustering;
 					callback(null, clusters)
 				}
 			});

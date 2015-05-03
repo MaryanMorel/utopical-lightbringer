@@ -27,8 +27,8 @@ var initTwitter = function(consumerKey, consumerSecret, user){
 
   var Twitter = require('twitter');
    
-  user.accessToken = '433689807-VFWgvizoaRBTKb7cVaC61mwOrVr3J5cBnjdFihsp';
-  user.refreshToken = 'axIE7g46rpDXVXJv2fw7K4Ot8wTZaCKWDnYL1IkcFP7QH';
+  user.accessToken = '3089105255-Tk2yPdqnFqQ5pDCIGXos5IXOVR5Fo1u7jJeZzkp';
+  user.refreshToken = '7MbNI2i7B2lQOtO3fhzqfVovuVLOo8hzJlJGb0OUFMdnz';
 
   var client = new Twitter({
     consumer_key: consumerKey,
@@ -56,20 +56,21 @@ var initPassport = function(consumerKey, consumerSecret, hostname) {
 
    User.findOne({ oauthID: profile.id }, function(err, user) {
   	 if(err) { console.log(err); }
-  	 // if (!err && user != null && user.screen_name) {
-    //   user.accessToken = accessToken;
-    //   user.refreshToken = refreshToken;
-    //   initTwitter(consumerKey, consumerSecret, user);
-    //   user.save(function(err) {
-    //      if(err) { 
-    //        console.log(err); 
-    //      } else {
-    //        console.log("saving user ..." + util.inspect(user));
-    //        done(null, user);
-    //      };
-    //    });
-  		//  done(null, user);
-  	 // } 
+  	 if (!err && user != null && user.screen_name) {
+      user.accessToken = accessToken;
+      user.refreshToken = refreshToken;
+      user.ego_id = profile.id;
+      initTwitter(consumerKey, consumerSecret, user);
+      user.save(function(err) {
+         if(err) { 
+           console.log(err); 
+         } else {
+           console.log("saving user ..." + util.inspect(user));
+           done(null, user);
+         };
+       });
+  		 done(null, user);
+  	 } 
      else {
   		 var user = new User({
   			 oauthID: profile.id,
