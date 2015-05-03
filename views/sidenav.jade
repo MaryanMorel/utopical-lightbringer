@@ -19,20 +19,20 @@ md-sidenav(layout="column", class="md-sidenav-left md-whiteframe-z2", md-compone
 			md-divider
 			md-subheader Misc
 			md-item
-				md-item-content(md-ink-ripple, layout="row", layout-align="start center", ng-click="showDialog($event)")
+				md-item-content(md-ink-ripple, layout="row", layout-align="start center", ng-click="showHTML($event, 'dialogs/HowDoesItWork.html')")
 					div.inset
 						img(src="icons/settings.svg")
 					div.inset.
 						How does it work?
-				md-item-content(md-ink-ripple, layout="row", layout-align="start center", ng-click="showAlert()")
+				md-item-content(md-ink-ripple, layout="row", layout-align="start center", ng-click="showHTML($event, 'dialogs/Credits.html')")
 					div.inset
 						img(src="icons/assignement.svg")
 					div.inset.
 						Credits
 			md-item
-				md-item-content(md-ink-ripple, layout="row", layout-align="start center")
+				md-item-content(md-ink-ripple, layout="row", layout-align="start center", ng-click="showHTML($event, 'dialogs/Licence.html')")
 					div.inset
 						img(src="icons/info.svg")
 					div.inset.
-						License
+						Licence
 			md-divider

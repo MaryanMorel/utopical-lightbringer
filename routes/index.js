@@ -6,15 +6,61 @@ var Snapshot = require('../models/Snapshot.js');
 var auth = require('../authentication.js');
 var passport = require('passport')
 var async = require("async");
+var fs		= require('fs');
 
 
-exports.index = function(req, res){
-	res.render('login', { title: "Passport-Examples"});
+exports.login = function(req, res){
+	res.render('login');
 };
 
+exports.logout = function(req, res){
+	req.logout();
+	res.redirect('/');
+};
+
+exports.treatment = function(app){
+	return function(req, res){
+		// If ths clustering is done, redirect to the root page
+		if (app.work_ready){
+			res.redirect('/');
+		}
+		else {
+			// DEBUG : we fake treatment here as we do not communication explicitely with the server
+			if (app.launched_request) {
+					app.work_ready = true;
+				}
+
+			if (!app.launched_request){
+				// app.client.invoke('start_manager', '{"key":" +' req.user.accessToken + '", "secret":"' + req.user.refreshToken + '"}', function(error, result, more) {
+				//	 // Clustering is ready in the database
+				//	 app.work_ready = true;
+				// }
+
+				// in order to launch request only once
+				app.launched_request = true;
+			}
+
+			// If not is work ready, we display a waiting gif selected randomly
+			var loading_gifs = JSON.parse(fs.readFileSync('loading_gif.js', 'utf8'));
+			var randomIndex = Math.floor(Math.random() * loading_gifs.length)
+
+			res.render('progress', {
+				gif: loading_gifs[randomIndex]
+			});
+		}
+	};
+}
 
 
+// routes for root page
 exports.getSortedTweets = function(req, res){
+
+	// res.render('main', {
+	// 		"title" : "Utopical",
+	// 		"tweetfeeds" : []
+	// });
+
+	// return;
 
 	// Query to get homefeed of users (last tweets)
 	var getHomeFeed = function(callback){
@@ -40,7 +86,7 @@ exports.getSortedTweets = function(req, res){
 		queries = [];
 		for(var i = 0; i < clusters.length; i++){
 			cluster = clusters[i];
-            var unJoinedQueries = cluster.map(function(screen_name){ return ("from:" + screen_name); })
+						var unJoinedQueries = cluster.map(function(screen_name){ return ("from:" + screen_name); })
 			var currentStart = 0;
 			var lastQuery = '';
 			for (var j = 0; j < cluster.length + 1; j++){
@@ -48,7 +94,7 @@ exports.getSortedTweets = function(req, res){
 				if (currentQuery.length > maxQueryLength || (j-currentStart) > maxSearchPerQuery){
 					queries.push(lastQuery);
 					currentStart = j-1;
-                    currentQuery = unJoinedQueries.slice(currentStart, j).join('+OR+');
+										currentQuery = unJoinedQueries.slice(currentStart, j).join('+OR+');
 				}
 				lastQuery = currentQuery;
 			}

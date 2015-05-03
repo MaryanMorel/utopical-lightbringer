@@ -13,16 +13,16 @@ html(lang="en")
 		script(src="//ajax.googleapis.com/ajax/libs/angular_material/0.8.3/angular-material.min.js")
 		meta(http-equiv="refresh", content=(gif.delay-0.1))
 
-	body
+	body(onload="adjustCardSize();")
 		md-card#contentCard(style="position:absolute; left:50%; top:50%; background-color: white; height:500px; width:300px;")
 			md-card-content
-				h1 Proccessing
+				h1 Processing
 					span#wait
 				p We are currently detecting amazing topics!
 				
 
 				h3=gif.text 
-				-var gifPath = 'images/loading_gif/' + gif.filename
+				- var gifPath = 'images/loading_gif/' + gif.filename
 				img#waitingGif(src=gifPath, style="display:block; margin-left:auto; margin-right:auto;", alt=gif.text)
 
 				a(href=gif.source, style="float: right; margin-top: 7px;") source
@@ -37,19 +37,24 @@ html(lang="en")
 					wait.innerHTML += ".";
 				}, 500);
 				
-			console.log('#{gif.filename}')
+			function adjustCardSize(){
+				console.log('#{gif.filename}')
 
+				var img = document.getElementById('waitingGif'); 
+				var height = (200 + img.clientHeight);
+				var width = (60 + img.clientWidth);
+				console.log('img height : ' + img.clientHeight + ', final height : ' + height)
+				console.log('img width : ' + img.clientWidth + ', final width : ' + width)
 
-			var img = document.getElementById('waitingGif'); 
-			var width = img.clientWidth;
-			var height = img.clientHeight;
+				var gifPath = 'images/loading_gif/' + '#{gif.filename}'
+				document.getElementById("waitingGif").src = "yo";
+				document.getElementById("waitingGif").src = gifPath;
 
-			var gifPath = 'images/loading_gif/' + '#{gif.filename}'
-			document.getElementById("waitingGif").src = "yo";
-			document.getElementById("waitingGif").src = gifPath;
-
-			var contentCard = document.getElementById("contentCard");// + height;
-			contentCard.style.height = (200 + height) + 'px';
-			contentCard.style.width = (60 + width) + 'px';
-			contentCard.style.marginTop = -(200 + height)/2 + 'px';
-			contentCard.style.marginLeft = -(60 + width)/2 + 'px';
+				var contentCard = document.getElementById("contentCard");
+				
+				contentCard.style.height = height + 'px';
+				contentCard.style.width = width + 'px';
+				contentCard.style.marginTop = -(height)/2 + 'px';
+				contentCard.style.marginLeft = -(width)/2 + 'px';
+			}
+			adjustCardSize();

@@ -20,6 +20,9 @@ div(layout="column", flex, id="content")
 										- sanitized_tweet = sanitized_tweet.replace(media.url, "");
 
 						//- then add links to hashtags, mentions, urls etc.
+						//- We split it into two categories : snatinitez and unsanitized
+						//- sanitized : HTML caracters will be escaped (<a> link </a> renders a "<a> link </a>")
+						//- unsanitized : HTML charaters will be interpreted (<a> link </a> renders a link)
 						- var sanitized_tweet = [{"escape":false, "text":sanitized_tweet}];
 						- var replace_in_sanitized_tweet = function(sanitized_tweet, non_escape_to_remove, escape_to_add){
 						- 	var tmp_sanitized_tweet = [];

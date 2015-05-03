@@ -1,0 +1,23 @@
+<md-dialog aria-label="List dialog">
+	<md-content>
+		<h2>How does it work?</h2>
+		<p>
+			This website displays a tweet classification made with machine learning techniques.
+			<br/><br/>
+			In few words, this is how it works:
+			<ol>
+			<li>We retrieve the recents tweets of all the people your are following</li>
+			<li>We explore these tweets and the metadata of the link they refers to</li>
+			<li>We contruct a graph in which two users we be close and hence connected, if they use the same terms in their tweets</li>
+			<li>We use a machine learning technique called spectral clustering to find clusters in this graph</li>
+			<li>We display tweets by users in their respective cluster</li>
+			</ol>
+		</p>
+
+	</md-content>
+	<div class="md-actions">
+		<md-button ng-click="closeDialog()">
+			Close Dialog
+		</md-button>
+	</div>
+</md-dialog>

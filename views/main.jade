@@ -75,6 +75,21 @@ block content
 					}
 				}
 
+				$scope.showHTML = function($event, $htmlFile) {
+					var parentEl = angular.element(document.body);
+					$mdDialog.show({
+						parent: parentEl,
+						targetEvent: $event,
+						templateUrl:$htmlFile,
+						controller: DialogController
+					});
+					function DialogController(scope, $mdDialog) {
+						scope.closeDialog = function() {
+							$mdDialog.hide();
+						}
+					}
+				}
+
 
 				$scope.go = function ( path ) {
 					$window.location.assign(path );

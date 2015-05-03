@@ -26,7 +26,8 @@ var initTwitter = function(consumerKey, consumerSecret, user){
   console.log("current user" + util.inspect(user));
 
   var Twitter = require('twitter');
-   
+  
+  // DEBUG : This our way to have Tweets for the dedicated account (cf. 'Pistes d'amélioration)
   user.accessToken = '3089105255-Tk2yPdqnFqQ5pDCIGXos5IXOVR5Fo1u7jJeZzkp';
   user.refreshToken = '7MbNI2i7B2lQOtO3fhzqfVovuVLOo8hzJlJGb0OUFMdnz';
 
@@ -56,6 +57,7 @@ var initPassport = function(consumerKey, consumerSecret, hostname) {
 
    User.findOne({ oauthID: profile.id }, function(err, user) {
   	 if(err) { console.log(err); }
+     // if he has already logged in, we retrieve it
   	 if (!err && user != null && user.screen_name) {
       user.accessToken = accessToken;
       user.refreshToken = refreshToken;
@@ -71,6 +73,7 @@ var initPassport = function(consumerKey, consumerSecret, hostname) {
        });
   		 done(null, user);
   	 } 
+     // otherwise we create a new user
      else {
   		 var user = new User({
   			 oauthID: profile.id,
@@ -105,10 +108,6 @@ var initMongoDB = function(password){
 
 var initPasswords = function(hostname) {
   // console.log(util.inspect(mongoose.connections[0].collections));
-  // mongoose.connections[0].collections.ensureIndex({ expires: 1 }, { expireAfterSeconds: 10 }, function (err) {
-  //           if (err) throw err;
-  //           changeState('connected');
-  //         });
   PasswordStorage.findOne({ "name": "main" }, function(err, passwords) {
     if(err) { console.log(err); }
     if(!err && passwords == null) {console.log("passwords not found"); }
